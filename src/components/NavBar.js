@@ -9,10 +9,27 @@ import {
   BrowserRouter as Router
 } from "react-router-dom";
 
+const translations = {
+  en: {
+    home: "Home",
+    skills: "Skills", 
+    projects: "Projects",
+    connect: "Let's Connect"
+  },
+  he: {
+    home: "דף הבית",
+    skills: "כישורים",
+    projects: "פרויקטים", 
+    connect: "צור קשר"
+  }
+};
+
 export const NavBar = () => {
 
   const [activeLink, setActiveLink] = useState('home');
   const [scrolled, setScrolled] = useState(false);
+  const [isHebrew, setIsHebrew] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const onScroll = () => {
@@ -28,10 +45,37 @@ export const NavBar = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, [])
 
+  useEffect(() => {
+    const detectLocation = async () => {
+      try {
+        // Check browser language first
+        const browserLang = navigator.language;
+        if (browserLang.includes('he')) {
+          setIsHebrew(true);
+          setLoading(false);
+          return;
+        }
+
+        // Fallback to IP geolocation
+        const response = await fetch('https://ipapi.co/json/');
+        const data = await response.json();
+        setIsHebrew(data.country_code === 'IL');
+      } catch (error) {
+        console.error('Location detection failed:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    detectLocation();
+  }, []);
+
   const onUpdateActiveLink = (value) => {
     setActiveLink(value);
   }
 
+  const lang = isHebrew ? 'he' : 'en';
+  
   return (
     <Router>
       <Navbar expand="md" className={scrolled ? "scrolled" : ""}>
@@ -43,10 +87,28 @@ export const NavBar = () => {
             <span className="navbar-toggler-icon"></span>
           </Navbar.Toggle>
           <Navbar.Collapse id="basic-navbar-nav">
-            <Nav className="ms-auto">
-              <Nav.Link href="#home" className={activeLink === 'home' ? 'active navbar-link' : 'navbar-link'} onClick={() => onUpdateActiveLink('home')}>Home</Nav.Link>
-              <Nav.Link href="#skills" className={activeLink === 'skills' ? 'active navbar-link' : 'navbar-link'} onClick={() => onUpdateActiveLink('skills')}>Skills</Nav.Link>
-              <Nav.Link href="#projects" className={activeLink === 'projects' ? 'active navbar-link' : 'navbar-link'} onClick={() => onUpdateActiveLink('projects')}>Projects</Nav.Link>
+            <Nav className="ms-auto" dir={isHebrew ? "rtl" : "ltr"}>
+              <Nav.Link 
+                href="#home"
+                className={activeLink === 'home' ? 'active navbar-link' : 'navbar-link'}
+                onClick={() => onUpdateActiveLink('home')}
+              >
+                {translations[lang].home}
+              </Nav.Link>
+              <Nav.Link 
+                href="#skills"
+                className={activeLink === 'skills' ? 'active navbar-link' : 'navbar-link'}
+                onClick={() => onUpdateActiveLink('skills')}
+              >
+                {translations[lang].skills}
+              </Nav.Link>
+              <Nav.Link 
+                href="#projects"
+                className={activeLink === 'projects' ? 'active navbar-link' : 'navbar-link'}
+                onClick={() => onUpdateActiveLink('projects')}
+              >
+                {translations[lang].projects}
+              </Nav.Link>
             </Nav>
             <span className="navbar-text">
               <div className="social-icon">
@@ -55,7 +117,9 @@ export const NavBar = () => {
                 <a href="#"><img src={navIcon3} alt="" /></a>
               </div>
               <HashLink to='#connect'>
-                <button className="vvd"><span>Let’s Connect</span></button>
+                <button className="vvd">
+                  <span>{translations[lang].connect}</span>
+                </button>
               </HashLink>
             </span>
           </Navbar.Collapse>
